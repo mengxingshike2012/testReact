@@ -6,7 +6,6 @@
  *
  * @flow
  */
-
 export type TypeOfMode = number;
 
 export const NoMode = 0b0000;

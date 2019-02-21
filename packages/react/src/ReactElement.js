@@ -8,8 +8,8 @@
 import invariant from 'shared/invariant';
 import warningWithoutStack from 'shared/warningWithoutStack';
 import {REACT_ELEMENT_TYPE} from 'shared/ReactSymbols';
-
 import ReactCurrentOwner from './ReactCurrentOwner';
+
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 

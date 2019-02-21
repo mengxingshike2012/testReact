@@ -9,7 +9,8 @@
 
 'use strict';
 
-const React = require('./src/React');
+// const React = require('./src/React');
+import React from './src/React'
 
 // TODO: decide on the top-level export form.
 // This is hacky but makes it work with both Rollup and Jest.

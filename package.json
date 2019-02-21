@@ -85,7 +85,8 @@
     "targz": "^1.0.1",
     "through2": "^2.0.0",
     "tmp": "~0.0.28",
-    "typescript": "~1.8.10"
+    "typescript": "~1.8.10",
+    "webpack": "3.10.0"
   },
   "devEngines": {
     "node": "8.x || 9.x || 10.x || 11.x || 12.x"
@@ -94,6 +95,7 @@
     "testRegex": "/scripts/jest/dont-run-jest-directly\\.js$"
   },
   "scripts": {
+    "viewS": "webpack --config test-env/config/webpack.js -w --verbose",
     "build": "node ./scripts/rollup/build.js",
     "linc": "node ./scripts/tasks/linc.js",
     "lint": "node ./scripts/tasks/eslint.js",
@@ -115,5 +117,15 @@
     "prettier": "node ./scripts/prettier/index.js write-changed",
     "prettier-all": "node ./scripts/prettier/index.js write",
     "version-check": "node ./scripts/tasks/version-check.js"
+  },
+  "dependencies": {
+    "babel-loader": "6.2.10",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-latest": "^6.24.1",
+    "css-loader": "0.26.1",
+    "happypack": "4.0.0",
+    "html-webpack-plugin": "^3.2.0",
+    "style-loader": "0.13.1",
+    "webpack-dev-server": "^3.1.14"
   }
 }
