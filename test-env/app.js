@@ -4,16 +4,30 @@ import ReactDOM from '@packages/react-dom';
 const init = {count: 0}
 
 function Hooks() {
-  debugger;
-  const count = useTestHook(init)
+  // const count = useTestHook(init)
 
-  return (<div>
-      <p>you have clicked {count.count} times</p>
-      {/* <button onClick={() => setCount({count: count+1})}> */}
-      <button>
-        Click me
-      </button>
-    </div>)
+  // return (<div>
+  //     <p>you have clicked {count.count} times</p>
+  //     {/* <button onClick={() => setCount({count: count+1})}> */}
+  //     <button>
+  //       Click me
+  //     </button>
+  //   </div>)
+  const [count, setCount] = useState(0);
+  const [name, setName] = useState('Star');
+
+  // 调用三次setCount便于查看更新队列的情况
+  const countPlusThree = () => {
+    setCount(count+1);
+    setCount(count+2);
+    setCount(count+3);
+  }
+  return (
+    <div className='App'>
+      <p>{name} Has Clicked <strong>{count}</strong> Times</p>
+      <button onClick={countPlusThree}>Click *3</button>
+    </div>
+  )
 }
 
 function useTestHook() {
