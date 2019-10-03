@@ -38,30 +38,33 @@ import {
   findHostInstance,
   findHostInstanceWithWarning,
   flushPassiveEffects,
-  ReactActingRendererSigil,
+  IsThisRendererActing,
+  attemptSynchronousHydration,
+  attemptUserBlockingHydration,
+  attemptContinuousHydration,
 } from 'react-reconciler/inline.dom';
 import {createPortal as createPortalImpl} from 'shared/ReactPortal';
 import {canUseDOM} from 'shared/ExecutionEnvironment';
-import {setBatchingImplementation} from 'events/ReactGenericBatching';
+import {setBatchingImplementation} from 'legacy-events/ReactGenericBatching';
 import {
   setRestoreImplementation,
   enqueueStateRestore,
   restoreStateIfNeeded,
-} from 'events/ReactControlledComponent';
-import {injection as EventPluginHubInjection} from 'events/EventPluginHub';
-import {runEventsInBatch} from 'events/EventBatching';
-import {eventNameDispatchConfigs} from 'events/EventPluginRegistry';
+} from 'legacy-events/ReactControlledComponent';
+import {injection as EventPluginHubInjection} from 'legacy-events/EventPluginHub';
+import {runEventsInBatch} from 'legacy-events/EventBatching';
+import {eventNameDispatchConfigs} from 'legacy-events/EventPluginRegistry';
 import {
   accumulateTwoPhaseDispatches,
   accumulateDirectDispatches,
-} from 'events/EventPropagators';
+} from 'legacy-events/EventPropagators';
 import {LegacyRoot, ConcurrentRoot, BatchedRoot} from 'shared/ReactRootTags';
 import {has as hasInstance} from 'shared/ReactInstanceMap';
 import ReactVersion from 'shared/ReactVersion';
 import ReactSharedInternals from 'shared/ReactSharedInternals';
 import getComponentName from 'shared/getComponentName';
 import invariant from 'shared/invariant';
-import lowPriorityWarning from 'shared/lowPriorityWarning';
+import lowPriorityWarningWithoutStack from 'shared/lowPriorityWarningWithoutStack';
 import warningWithoutStack from 'shared/warningWithoutStack';
 import {enableStableConcurrentModeAPIs} from 'shared/ReactFeatureFlags';
 
@@ -70,9 +73,16 @@ import {
   getNodeFromInstance,
   getFiberCurrentPropsFromNode,
   getClosestInstanceFromNode,
+  markContainerAsRoot,
 } from './ReactDOMComponentTree';
 import {restoreControlledState} from './ReactDOMComponent';
 import {dispatchEvent} from '../events/ReactDOMEventListener';
+import {
+  setAttemptSynchronousHydration,
+  setAttemptUserBlockingHydration,
+  setAttemptContinuousHydration,
+} from '../events/ReactDOMEventReplaying';
+import {eagerlyTrapReplayableEvents} from '../events/ReactDOMEventReplaying';
 import {
   ELEMENT_NODE,
   COMMENT_NODE,
@@ -80,6 +90,10 @@ import {
   DOCUMENT_FRAGMENT_NODE,
 } from '../shared/HTMLNodeType';
 import {ROOT_ATTRIBUTE_NAME} from '../shared/DOMProperty';
+
+setAttemptSynchronousHydration(attemptSynchronousHydration);
+setAttemptUserBlockingHydration(attemptUserBlockingHydration);
+setAttemptContinuousHydration(attemptContinuousHydration);
 
 const ReactCurrentOwner = ReactSharedInternals.ReactCurrentOwner;
 
@@ -364,19 +378,37 @@ ReactWork.prototype._onCommit = function(): void {
   }
 };
 
+function createRootImpl(
+  container: DOMContainer,
+  tag: RootTag,
+  options: void | RootOptions,
+) {
+  // Tag is either LegacyRoot or Concurrent Root
+  const hydrate = options != null && options.hydrate === true;
+  const hydrationCallbacks =
+    (options != null && options.hydrationOptions) || null;
+  const root = createContainer(container, tag, hydrate, hydrationCallbacks);
+  markContainerAsRoot(root.current, container);
+  if (hydrate && tag !== LegacyRoot) {
+    const doc =
+      container.nodeType === DOCUMENT_NODE
+        ? container
+        : container.ownerDocument;
+    eagerlyTrapReplayableEvents(doc);
+  }
+  return root;
+}
+
 function ReactSyncRoot(
   container: DOMContainer,
   tag: RootTag,
-  hydrate: boolean,
+  options: void | RootOptions,
 ) {
-  // Tag is either LegacyRoot or Concurrent Root
-  const root = createContainer(container, tag, hydrate);
-  this._internalRoot = root;
+  this._internalRoot = createRootImpl(container, tag, options);
 }
 
-function ReactRoot(container: DOMContainer, hydrate: boolean) {
-  const root = createContainer(container, ConcurrentRoot, hydrate);
-  this._internalRoot = root;
+function ReactRoot(container: DOMContainer, options: void | RootOptions) {
+  this._internalRoot = createRootImpl(container, ConcurrentRoot, options);
 }
 
 ReactRoot.prototype.render = ReactSyncRoot.prototype.render = function(
@@ -522,7 +554,7 @@ function legacyCreateRootFromDOMContainer(
   if (__DEV__) {
     if (shouldHydrate && !forceHydrate && !warnedAboutHydrateAPI) {
       warnedAboutHydrateAPI = true;
-      lowPriorityWarning(
+      lowPriorityWarningWithoutStack(
         false,
         'render(): Calling ReactDOM.render() to hydrate server-rendered markup ' +
           'will stop working in React v17. Replace the ReactDOM.render() call ' +
@@ -532,7 +564,15 @@ function legacyCreateRootFromDOMContainer(
   }
 
   // Legacy roots are not batched.
-  return new ReactSyncRoot(container, LegacyRoot, shouldHydrate);
+  return new ReactSyncRoot(
+    container,
+    LegacyRoot,
+    shouldHydrate
+      ? {
+          hydrate: true,
+        }
+      : undefined,
+  );
 }
 
 function legacyRenderSubtreeIntoContainer(
@@ -773,7 +813,7 @@ const ReactDOM: Object = {
   unstable_createPortal(...args) {
     if (!didWarnAboutUnstableCreatePortal) {
       didWarnAboutUnstableCreatePortal = true;
-      lowPriorityWarning(
+      lowPriorityWarningWithoutStack(
         false,
         'The ReactDOM.unstable_createPortal() alias has been deprecated, ' +
           'and will be removed in React 17+. Update your code to use ' +
@@ -817,13 +857,17 @@ const ReactDOM: Object = {
       dispatchEvent,
       runEventsInBatch,
       flushPassiveEffects,
-      ReactActingRendererSigil,
+      IsThisRendererActing,
     ],
   },
 };
 
 type RootOptions = {
   hydrate?: boolean,
+  hydrationOptions?: {
+    onHydrated?: (suspenseNode: Comment) => void,
+    onDeleted?: (suspenseNode: Comment) => void,
+  },
 };
 
 function createRoot(
@@ -839,8 +883,7 @@ function createRoot(
     functionName,
   );
   warnIfReactDOMContainerInDEV(container);
-  const hydrate = options != null && options.hydrate === true;
-  return new ReactRoot(container, hydrate);
+  return new ReactRoot(container, options);
 }
 
 function createSyncRoot(
@@ -856,8 +899,7 @@ function createSyncRoot(
     functionName,
   );
   warnIfReactDOMContainerInDEV(container);
-  const hydrate = options != null && options.hydrate === true;
-  return new ReactSyncRoot(container, BatchedRoot, hydrate);
+  return new ReactSyncRoot(container, BatchedRoot, options);
 }
 
 function warnIfReactDOMContainerInDEV(container) {

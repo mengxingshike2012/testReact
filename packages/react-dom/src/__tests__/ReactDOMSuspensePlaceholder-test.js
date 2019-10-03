@@ -83,25 +83,48 @@ describe('ReactDOMSuspensePlaceholder', () => {
           <div ref={divs[1]}>
             <AsyncText ms={500} text="B" />
           </div>
-          <div style={{display: 'block'}} ref={divs[2]}>
+          <div style={{display: 'inline'}} ref={divs[2]}>
             <Text text="C" />
           </div>
         </Suspense>
       );
     }
     ReactDOM.render(<App />, container);
-    expect(divs[0].current.style.display).toEqual('none');
-    expect(divs[1].current.style.display).toEqual('none');
-    expect(divs[2].current.style.display).toEqual('none');
+    expect(window.getComputedStyle(divs[0].current).display).toEqual('none');
+    expect(window.getComputedStyle(divs[1].current).display).toEqual('none');
+    expect(window.getComputedStyle(divs[2].current).display).toEqual('none');
 
     await advanceTimers(500);
 
-    Scheduler.flushAll();
+    Scheduler.unstable_flushAll();
 
-    expect(divs[0].current.style.display).toEqual('');
-    expect(divs[1].current.style.display).toEqual('');
+    expect(window.getComputedStyle(divs[0].current).display).toEqual('block');
+    expect(window.getComputedStyle(divs[1].current).display).toEqual('block');
     // This div's display was set with a prop.
-    expect(divs[2].current.style.display).toEqual('block');
+    expect(window.getComputedStyle(divs[2].current).display).toEqual('inline');
+  });
+
+  it('hides and unhides child portals', async () => {
+    const portalContainer = document.createElement('div');
+    function Component() {
+      return ReactDOM.createPortal(<span />, portalContainer);
+    }
+
+    function App() {
+      return (
+        <Suspense fallback={<Text text="Loading..." />}>
+          <AsyncText ms={500} text="A" />
+          <Component />
+        </Suspense>
+      );
+    }
+
+    ReactDOM.render(<App />, container);
+    expect(window.getComputedStyle(portalContainer).display).toEqual('none');
+
+    await advanceTimers(500);
+    Scheduler.unstable_flushAll();
+    expect(window.getComputedStyle(portalContainer).display).toEqual('block');
   });
 
   it('hides and unhides timed out text nodes', async () => {
@@ -119,7 +142,7 @@ describe('ReactDOMSuspensePlaceholder', () => {
 
     await advanceTimers(500);
 
-    Scheduler.flushAll();
+    Scheduler.unstable_flushAll();
 
     expect(container.textContent).toEqual('ABC');
   });
@@ -156,17 +179,19 @@ describe('ReactDOMSuspensePlaceholder', () => {
         ReactDOM.render(<App />, container);
       });
       expect(container.innerHTML).toEqual(
-        '<span style="display: none;">Sibling</span><span style="display: none;"></span>Loading...',
+        '<span style="display: none;">Sibling</span><span style=' +
+          '"display: none;"></span>Loading...',
       );
 
       act(() => setIsVisible(true));
       expect(container.innerHTML).toEqual(
-        '<span style="display: none;">Sibling</span><span style="display: none;"></span>Loading...',
+        '<span style="display: none;">Sibling</span><span style=' +
+          '"display: none;"></span>Loading...',
       );
 
       await advanceTimers(500);
 
-      Scheduler.flushAll();
+      Scheduler.unstable_flushAll();
 
       expect(container.innerHTML).toEqual(
         '<span style="display: inline;">Sibling</span><span style="">Async</span>',

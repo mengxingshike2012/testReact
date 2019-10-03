@@ -9,6 +9,7 @@
 const fs = require('fs');
 const evalToString = require('../shared/evalToString');
 const invertObject = require('./invertObject');
+const helperModuleImports = require('@babel/helper-module-imports');
 
 module.exports = function(babel) {
   const t = babel.types;
@@ -29,9 +30,9 @@ module.exports = function(babel) {
           //
           // if (!condition) {
           //   if (__DEV__) {
-          //     throw ReactError(`A ${adj} message that contains ${noun}`);
+          //     throw ReactError(Error(`A ${adj} message that contains ${noun}`));
           //   } else {
-          //     throw ReactErrorProd(ERR_CODE, adj, noun);
+          //     throw ReactErrorProd(Error(ERR_CODE), adj, noun);
           //   }
           // }
           //
@@ -45,29 +46,40 @@ module.exports = function(babel) {
             .split('%s')
             .map(raw => t.templateElement({raw, cooked: String.raw({raw})}));
 
-          // Import ReactError
-          const reactErrorIdentfier = file.addImport(
+          const reactErrorIdentfier = helperModuleImports.addDefault(
+            path,
             'shared/ReactError',
-            'default',
-            'ReactError'
+            {
+              nameHint: 'ReactError',
+            }
           );
 
           // Outputs:
-          //   throw ReactError(`A ${adj} message that contains ${noun}`);
+          //   throw ReactError(Error(`A ${adj} message that contains ${noun}`));
           const devThrow = t.throwStatement(
             t.callExpression(reactErrorIdentfier, [
-              t.templateLiteral(errorMsgQuasis, errorMsgExpressions),
+              t.callExpression(t.identifier('Error'), [
+                t.templateLiteral(errorMsgQuasis, errorMsgExpressions),
+              ]),
             ])
           );
+
+          const parentStatementPath = path.parentPath;
+          if (parentStatementPath.type !== 'ExpressionStatement') {
+            throw path.buildCodeFrameError(
+              'invariant() cannot be called from expression context. Move ' +
+                'the call to its own statement.'
+            );
+          }
 
           if (noMinify) {
             // Error minification is disabled for this build.
             //
             // Outputs:
             //   if (!condition) {
-            //     throw ReactError(`A ${adj} message that contains ${noun}`);
+            //     throw ReactError(Error(`A ${adj} message that contains ${noun}`));
             //   }
-            path.replaceWith(
+            parentStatementPath.replaceWith(
               t.ifStatement(
                 t.unaryExpression('!', condition),
                 t.blockStatement([devThrow])
@@ -92,7 +104,7 @@ module.exports = function(babel) {
             // Outputs:
             //   /* FIXME (minify-errors-in-prod): Unminified error message in production build! */
             //   if (!condition) {
-            //     throw ReactError(`A ${adj} message that contains ${noun}`);
+            //     throw ReactError(Error(`A ${adj} message that contains ${noun}`));
             //   }
             path.replaceWith(
               t.ifStatement(
@@ -109,17 +121,19 @@ module.exports = function(babel) {
           prodErrorId = parseInt(prodErrorId, 10);
 
           // Import ReactErrorProd
-          const reactErrorProdIdentfier = file.addImport(
+          const reactErrorProdIdentfier = helperModuleImports.addDefault(
+            path,
             'shared/ReactErrorProd',
-            'default',
-            'ReactErrorProd'
+            {nameHint: 'ReactErrorProd'}
           );
 
           // Outputs:
-          //   throw ReactErrorProd(ERR_CODE, adj, noun);
+          //   throw ReactErrorProd(Error(ERR_CODE), adj, noun);
           const prodThrow = t.throwStatement(
             t.callExpression(reactErrorProdIdentfier, [
-              t.numericLiteral(prodErrorId),
+              t.callExpression(t.identifier('Error'), [
+                t.numericLiteral(prodErrorId),
+              ]),
               ...errorMsgExpressions,
             ])
           );
@@ -127,12 +141,12 @@ module.exports = function(babel) {
           // Outputs:
           //   if (!condition) {
           //     if (__DEV__) {
-          //       throw ReactError(`A ${adj} message that contains ${noun}`);
+          //       throw ReactError(Error(`A ${adj} message that contains ${noun}`));
           //     } else {
-          //       throw ReactErrorProd(ERR_CODE, adj, noun);
+          //       throw ReactErrorProd(Error(ERR_CODE), adj, noun);
           //     }
           //   }
-          path.replaceWith(
+          parentStatementPath.replaceWith(
             t.ifStatement(
               t.unaryExpression('!', condition),
               t.blockStatement([
