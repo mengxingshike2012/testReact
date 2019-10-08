@@ -96,7 +96,7 @@
     "testRegex": "/scripts/jest/dont-run-jest-directly\\.js$"
   },
   "scripts": {
-    "viewS": "webpack --config test-env/config/webpack.js -w --verbose",
+    "s": "webpack --config test-env/config/webpack.js -w --verbose",
     "build": "node ./scripts/rollup/build.js",
     "linc": "node ./scripts/tasks/linc.js",
     "lint": "node ./scripts/tasks/eslint.js",
