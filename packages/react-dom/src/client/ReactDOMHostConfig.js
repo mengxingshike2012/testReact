@@ -7,7 +7,11 @@
  * @flow
  */
 
-import {precacheFiberNode, updateFiberProps} from './ReactDOMComponentTree';
+import {
+  precacheFiberNode,
+  updateFiberProps,
+  getClosestInstanceFromNode,
+} from './ReactDOMComponentTree';
 import {
   createElement,
   createTextNode,
@@ -51,6 +55,7 @@ import {
   addRootEventTypesForResponderInstance,
   mountEventResponder,
   unmountEventResponder,
+  dispatchEventForResponderEventSystem,
 } from '../events/DOMEventResponderSystem';
 import {retryIfBlockedOn} from '../events/ReactDOMEventReplaying';
 
@@ -104,6 +109,10 @@ import {
   enableFlareAPI,
   enableFundamentalAPI,
 } from 'shared/ReactFeatureFlags';
+import {
+  RESPONDER_EVENT_SYSTEM,
+  IS_PASSIVE,
+} from 'legacy-events/EventSystemFlags';
 
 let SUPPRESS_HYDRATION_WARNING;
 if (__DEV__) {
@@ -443,10 +452,36 @@ export function insertInContainerBefore(
   }
 }
 
+function handleSimulateChildBlur(
+  child: Instance | TextInstance | SuspenseInstance,
+): void {
+  if (
+    enableFlareAPI &&
+    selectionInformation &&
+    child === selectionInformation.focusedElem
+  ) {
+    const targetFiber = getClosestInstanceFromNode(child);
+    // Simlulate a blur event to the React Flare responder system.
+    dispatchEventForResponderEventSystem(
+      'blur',
+      targetFiber,
+      ({
+        relatedTarget: null,
+        target: child,
+        timeStamp: Date.now(),
+        type: 'blur',
+      }: any),
+      ((child: any): Document | Element),
+      RESPONDER_EVENT_SYSTEM | IS_PASSIVE,
+    );
+  }
+}
+
 export function removeChild(
   parentInstance: Instance,
   child: Instance | TextInstance | SuspenseInstance,
 ): void {
+  handleSimulateChildBlur(child);
   parentInstance.removeChild(child);
 }
 
@@ -457,6 +492,7 @@ export function removeChildFromContainer(
   if (container.nodeType === COMMENT_NODE) {
     (container.parentNode: any).removeChild(child);
   } else {
+    handleSimulateChildBlur(child);
     container.removeChild(child);
   }
 }
@@ -975,4 +1011,8 @@ export function unmountFundamentalComponent(
       onUnmount(null, instance, props, state);
     }
   }
+}
+
+export function getInstanceFromNode(node: HTMLElement): null | Object {
+  return getClosestInstanceFromNode(node) || null;
 }

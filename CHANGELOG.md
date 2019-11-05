@@ -6,6 +6,19 @@
   </summary>
 </details>
 
+## 16.11.0 (October 22, 2019)
+
+### React DOM
+
+* Fix `mouseenter` handlers from firing twice inside nested React containers. [@yuanoook](https://github.com/yuanoook) in [#16928](https://github.com/facebook/react/pull/16928)
+* Remove `unstable_createRoot` and `unstable_createSyncRoot` experimental APIs. (These are available in the Experimental channel as `createRoot` and `createSyncRoot`.) ([@acdlite](http://github.com/acdlite) in [#17088](https://github.com/facebook/react/pull/17088))
+
+## 16.10.2 (October 3, 2019)
+
+### React DOM
+
+* Fix regression in react-native-web by restoring order of arguments in event plugin extractors ([@necolas](https://github.com/necolas) in [#16978](https://github.com/facebook/react/pull/16978))
+
 ## 16.10.1 (September 28, 2019)
 
 ### React DOM
