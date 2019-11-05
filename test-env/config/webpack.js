@@ -42,6 +42,7 @@ module.exports = {
     new webpack.DefinePlugin({
       __DEV__: true,
       __UMD__: false,
+      __EXPERIMENTAL__: false,
       NODE_ENV:JSON.stringify('development'),
       spyOnDev: false,
       spyOnDevAndProd: false,

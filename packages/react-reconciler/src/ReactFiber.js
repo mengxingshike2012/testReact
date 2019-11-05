@@ -395,8 +395,6 @@ export function createWorkInProgress(
   pendingProps: any,
   expirationTime: ExpirationTime,
 ): Fiber {
-  // eslint-disable-next-line no-debugger
-  debugger;
   let workInProgress = current.alternate;
   if (workInProgress === null) {
     // We use a double buffering pooling technique because we know that we'll

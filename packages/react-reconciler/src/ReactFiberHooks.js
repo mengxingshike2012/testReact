@@ -384,6 +384,8 @@ export function renderWithHooks(
   currentlyRenderingFiber = workInProgress;
   nextCurrentHook = current !== null ? current.memoizedState : null;
 
+  debugger;
+
   if (__DEV__) {
     hookTypesDev =
       current !== null
@@ -668,6 +670,7 @@ function mountReducer<S, I, A>(
     ((currentlyRenderingFiber: any): Fiber),
     queue,
   ): any));
+  debugger;
   return [hook.memoizedState, dispatch];
 }
 
@@ -842,6 +845,7 @@ function mountState<S>(
     ((currentlyRenderingFiber: any): Fiber),
     queue,
   ): any));
+  debugger;
   return [hook.memoizedState, dispatch];
 }
 
@@ -1237,7 +1241,7 @@ function dispatchAction<S, A>(
         'rendering, declare it in the component body with useEffect().',
     );
   }
-
+  debugger;
   const alternate = fiber.alternate;
   if (
     fiber === currentlyRenderingFiber ||

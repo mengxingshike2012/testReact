@@ -162,8 +162,6 @@ function flushWork(hasTimeRemaining, initialTime) {
 }
 
 function workLoop(hasTimeRemaining, initialTime) {
-  // eslint-disable-next-line no-debugger
-  debugger;
   let currentTime = initialTime;
   advanceTimers(currentTime);
   currentTask = peek(taskQueue);

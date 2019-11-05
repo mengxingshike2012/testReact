@@ -28,6 +28,7 @@ module.exports = {
   // We're stricter than the default config, mostly. We'll override a few rules
   // and then enable some React specific ones.
   rules: {
+    'no-debugger': OFF,
     'accessor-pairs': OFF,
     'brace-style': [ERROR, '1tbs'],
     'comma-dangle': [ERROR, 'always-multiline'],

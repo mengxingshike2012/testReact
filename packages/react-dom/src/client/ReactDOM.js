@@ -193,8 +193,6 @@ function createRootImpl(
   tag: RootTag,
   options: void | RootOptions,
 ) {
-  // eslint-disable-next-line no-debugger
-  debugger;
   // Tag is either LegacyRoot or Concurrent Root
   const hydrate = options != null && options.hydrate === true;
   const hydrationCallbacks =
