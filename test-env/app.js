@@ -1,24 +1,39 @@
-import React, {useState,} from '@packages/react';
+import React, {useContext, useState,useMemo, useCallback, useRef,  useEffect} from '@packages/react';
 import ReactDOM from '@packages/react-dom';
 
-const init = {count: 0}
+const MyContext = React.createContext()
+
+function My() {
+  const name = useContext(MyContext)
+  console.log('rendering sub comp My ...')
+  return <h2>You, <strong>{name}</strong>, do you enjoy writing React?</h2>
+}
 
 function Hooks() {
   const [count, setCount] = useState(0);
+  const howMany = useRef(0)
+  console.log(`current APP has been rendered ${howMany} times`)
 
-  // 调用三次setCount便于查看更新队列的情况
-  const countPlusOne = () => {
+  useEffect(()=> {
+    console.log('useEffect Executed, current count is', count)
+  }, [count])
+
+  const masterName = useMemo(() => {
+    console.log('useMemo is called')
+    return 'KKK'
+  }, [])
+
+  const add = useCallback(() => {
+    console.log('useCallback is called')
     setCount(count+1);
-   
-  }
-  const countPlusTwo = () => {
-    setCount(count+2);
-  }
+  }, [count]) // need count, yeah, but the func ref will change, right ?
   return (
     <div className='App'>
-      <p> You Have Clicked <strong>{count}</strong> Times</p>
-      <button onClick={countPlusOne}>Click</button>
-      <button onClick={countPlusTwo}>Click *2</button>
+      <MyContext.Provider value="Mo.Wang">
+        <My />
+      </MyContext.Provider>
+      <p> You, {masterName}, Have Clicked <strong>{count}</strong> Times</p>
+      <button onClick={add}>Click</button>
     </div>
   )
 }

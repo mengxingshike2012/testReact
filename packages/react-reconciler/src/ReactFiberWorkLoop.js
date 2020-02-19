@@ -378,7 +378,6 @@ export function scheduleUpdateOnFiber(
   checkForNestedUpdates();
   warnAboutInvalidUpdatesOnClassComponentsInDEV(fiber);
 
-  debugger
   const root = markUpdateTimeFromFiberToRoot(fiber, expirationTime);
   if (root === null) {
     warnAboutUpdateOnUnmountedFiberInDEV(fiber);
@@ -406,7 +405,6 @@ export function scheduleUpdateOnFiber(
       // root inside of batchedUpdates should be synchronous, but layout updates
       // should be deferred until the end of the batch.
       performSyncWorkOnRoot(root);
-      debugger;
     } else {
       ensureRootIsScheduled(root);
       schedulePendingInteractions(root, expirationTime);
@@ -984,7 +982,6 @@ function performSyncWorkOnRoot(root) {
     // There's already a pending commit at this expiration time.
     // TODO: This is poorly factored. This case only exists for the
     // batch.commit() API.
-    debugger;
     commitRoot(root);
   } else {
     invariant(
@@ -1012,7 +1009,6 @@ function performSyncWorkOnRoot(root) {
       const prevDispatcher = pushDispatcher(root);
       const prevInteractions = pushInteractions(root);
       startWorkLoopTimer(workInProgress);
-      debugger;
       do {
         try {
           workLoopSync();
@@ -1474,7 +1470,6 @@ function performUnitOfWork(unitOfWork: Fiber): Fiber | null {
   // nothing should rely on this, but relying on it here means that we don't
   // need an additional field on the work in progress.
   const current = unitOfWork.alternate;
-  debugger;
 
   startWorkTimer(unitOfWork);
   setCurrentDebugFiberInDEV(unitOfWork);

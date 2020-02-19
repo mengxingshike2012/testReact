@@ -238,7 +238,6 @@ export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
   const alternate = fiber.alternate;
   let queue1;
   let queue2;
-  debugger
   if (alternate === null) {
     // There's only one fiber.
     queue1 = fiber.updateQueue;
