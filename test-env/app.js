@@ -11,8 +11,8 @@ function My() {
 
 function Hooks() {
   const [count, setCount] = useState(0);
-  const howMany = useRef(0)
-  console.log(`current APP has been rendered ${howMany} times`)
+  const howMany = useRef(1)
+  
 
   useEffect(()=> {
     console.log('useEffect Executed, current count is', count)
@@ -26,6 +26,7 @@ function Hooks() {
   const add = useCallback(() => {
     console.log('useCallback is called')
     setCount(count+1);
+    howMany.current = howMany.current + 1
   }, [count]) // need count, yeah, but the func ref will change, right ?
   return (
     <div className='App'>
@@ -34,6 +35,8 @@ function Hooks() {
       </MyContext.Provider>
       <p> You, {masterName}, Have Clicked <strong>{count}</strong> Times</p>
       <button onClick={add}>Click</button>
+
+      <h4>{`Current APP has been rendered ${howMany.current} times`}</h4>
     </div>
   )
 }
