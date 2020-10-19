@@ -1249,6 +1249,7 @@ function ChildReconciler(shouldTrackSideEffects) {
     newChild: any,
     expirationTime: ExpirationTime,
   ): Fiber | null {
+
     // This function is not recursive.
     // If the top level item is an array, we treat it as a set of children,
     // not as a fragment. Nested arrays on the other hand will be treated as
@@ -1363,7 +1364,6 @@ function ChildReconciler(shouldTrackSideEffects) {
     // Remaining cases are all treated as empty.
     return deleteRemainingChildren(returnFiber, currentFirstChild);
   }
-
   return reconcileChildFibers;
 }
 

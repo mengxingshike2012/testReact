@@ -383,6 +383,7 @@ export function renderWithHooks(
   renderExpirationTime = nextRenderExpirationTime;
   currentlyRenderingFiber = workInProgress;
   nextCurrentHook = current !== null ? current.memoizedState : null;
+   
 
   if (__DEV__) {
     hookTypesDev =

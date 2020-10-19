@@ -298,7 +298,6 @@ export function updateContainer(
     );
     update.callback = callback;
   }
-
   enqueueUpdate(current, update);
   scheduleWork(current, expirationTime);
 

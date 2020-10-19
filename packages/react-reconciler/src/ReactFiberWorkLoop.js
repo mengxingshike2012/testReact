@@ -391,6 +391,7 @@ export function scheduleUpdateOnFiber(
   // priority as an argument to that function and this one.
   const priorityLevel = getCurrentPriorityLevel();
 
+  
   if (expirationTime === Sync) {
     if (
       // Check if we're inside unbatchedUpdates
