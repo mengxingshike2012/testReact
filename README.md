@@ -1,3 +1,5 @@
+# this project was inspired by [源码调试环境搭建](https://juejin.im/post/6844903972634001421)
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
